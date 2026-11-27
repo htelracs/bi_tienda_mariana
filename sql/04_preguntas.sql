@@ -21,7 +21,6 @@ ORDER BY ventas DESC;
 
 
 --P3. ¿Cómo varían las ventas según el día de la semana?
-Lunes, martes y sábado aparecen dos veces en los 10 días, así que se compara el promedio por día, no el total:
 SELECT t.dia_semana, t.nombre_dia,
        COUNT(DISTINCT t.fecha) AS dias_registrados,
        SUM(f.valor) AS total,
