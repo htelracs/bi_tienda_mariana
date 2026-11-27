@@ -113,6 +113,17 @@
   - [B. Página 2: Muestra de Ventas y Comparativa](#pbi-p2)
   - [C. Cobertura de las preguntas de negocio](#pbi-cobertura)
 - [X. Análisis OLAP](#olap)
+  - [A. Vistas cubo y herramientas](#olap-vistas)
+  - [B. Tipo de OLAP utilizado](#olap-tipo)
+  - [C. Modelo OLAP en Power BI](#olap-modelo)
+  - [D. Roll-up: de mes a trimestre y año](#olap-rollup)
+  - [E. Drill-down: de año a trimestre y mes](#olap-drilldown)
+  - [F. Slice: año = 2025](#olap-slice)
+  - [G. Dice: T4 2025 × Bebidas y Snacks × solo mercadería](#olap-dice)
+  - [H. Pivot: categorías × trimestres](#olap-pivot)
+  - [I. Cube: todas las combinaciones de subtotales](#olap-cube)
+  - [J. Drill-across: compras vs ventas por categoría](#olap-across)
+  - [K. Informe OLAP publicado](#olap-publicado)
 - [XI. Insights y recomendaciones](#insights)
 - [XII. Conclusiones](#conclusiones)
 - [Referencias bibliográficas](#referencias)
@@ -156,6 +167,30 @@
 - [Fig. 28.](#fig-p7) Resultado de P7: porcentaje de compras y de ventas por categoría (16 filas; se muestran las primeras ocho).
 - [Fig. 29.](#fig-dash1) Página 1 del dashboard: Análisis de Facturas y Compras.
 - [Fig. 30.](#fig-dash2) Página 2 del dashboard: Muestra de Ventas y Comparativa.
+- [Fig. 31.](#fig-olap-vistas) Creación de las vistas v_cubo_compras y v_cubo_ventas en PostgreSQL.
+- [Fig. 32.](#fig-olap-modo) Modo de almacenamiento Importar del modelo en Power BI.
+- [Fig. 33.](#fig-olap-pbimodelo) Modelo en Power BI: dim_categoria relacionada con las dos vistas cubo.
+- [Fig. 34.](#fig-olap-pbipagina) Página de análisis OLAP en Power BI Desktop.
+- [Fig. 35.](#fig-olap-rollup_pg) Roll-up en PostgreSQL con GROUP BY ROLLUP: subtotales por trimestre, por año y total general.
+- [Fig. 36.](#fig-olap-rollup_xl) Roll-up en Excel: tabla dinámica contraída a nivel de año.
+- [Fig. 37.](#fig-olap-rollup_bi) Roll-up en Power BI: gráfico de columnas a nivel de año.
+- [Fig. 38.](#fig-olap-dd_pg) Drill-down en PostgreSQL: meses del cuarto trimestre de 2025.
+- [Fig. 39.](#fig-olap-dd_xl) Drill-down en Excel: expansión de 2025 a trimestre y mes.
+- [Fig. 40.](#fig-olap-dd_bi) Drill-down en Power BI: meses del cuarto trimestre de 2025.
+- [Fig. 41.](#fig-olap-sl_pg) Slice en PostgreSQL: compras por categoría con anio = 2025.
+- [Fig. 42.](#fig-olap-sl_xl) Slice en Excel: segmentación de año en 2025.
+- [Fig. 43.](#fig-olap-sl_bi) Slice en Power BI: segmentación de año en 2025.
+- [Fig. 44.](#fig-olap-dc_pg) Dice en PostgreSQL: cuarto trimestre de 2025, Bebidas y Snacks y dulces, solo mercadería.
+- [Fig. 45.](#fig-olap-dc_xl) Dice en Excel: tabla dinámica con segmentaciones de año, trimestre, categoría y es_mercaderia.
+- [Fig. 46.](#fig-olap-dc_bi) Dice en Power BI: segmentaciones de año, trimestre, categoría y es_mercaderia.
+- [Fig. 47.](#fig-olap-pv_pg) Pivot en PostgreSQL con SUM(...) FILTER: categorías en filas y trimestres en columnas.
+- [Fig. 48.](#fig-olap-pv_xl1) Pivot en Excel: categorías en filas y trimestres en columnas.
+- [Fig. 49.](#fig-olap-pv_xl2) Pivot en Excel: tabla girada, con trimestres en filas y categorías en columnas.
+- [Fig. 50.](#fig-olap-pv_bi1) Pivot en Power BI: matriz con categorías en filas y trimestres en columnas.
+- [Fig. 51.](#fig-olap-pv_bi2) Pivot en Power BI: matriz girada, con trimestres en filas y categorías en columnas.
+- [Fig. 52.](#fig-olap-cube) Cube en PostgreSQL con GROUP BY CUBE (anio, es_mercaderia).
+- [Fig. 53.](#fig-olap-da_pg) Drill-across en PostgreSQL: compras y ventas por categoría.
+- [Fig. 54.](#fig-olap-da_bi) Drill-across en Power BI: porcentaje de compras y de ventas por categoría.
 
 <a id="lot"></a>
 
@@ -183,7 +218,16 @@
 - [TABLE XX.](#tab-r6) P6. Composición de lo facturado
 - [TABLE XXI.](#tab-r7) P7. Participación en compras y en ventas por categoría (primeras ocho)
 - [TABLE XXII.](#tab-cobertura) Visuales del dashboard y preguntas de negocio que responden
-- [TABLE XXIII.](#tab-insights) Hallazgos, evidencia y recomendaciones
+- [TABLE XXIII.](#tab-olap-cubos) Cubos OLAP, medidas y dimensiones
+- [TABLE XXIV.](#tab-olap-herr) Herramientas utilizadas en el análisis OLAP
+- [TABLE XXV.](#tab-olap-rolap) Comparación entre ROLAP y MOLAP en esta solución
+- [TABLE XXVI.](#tab-olap-rollup) Roll-up: compras por año y trimestre
+- [TABLE XXVII.](#tab-olap-slice) Slice: compras por categoría en 2025 (cinco primeras)
+- [TABLE XXVIII.](#tab-olap-dice) Dice: compras de Bebidas y Snacks y dulces en el cuarto trimestre de 2025
+- [TABLE XXIX.](#tab-olap-pivot) Pivot: compras por categoría y trimestre en 2025 (ocho primeras categorías)
+- [TABLE XXX.](#tab-olap-cube) Cube: compras por año y tipo de proveedor
+- [TABLE XXXI.](#tab-olap-across) Drill-across: participación en compras y en ventas por categoría
+- [TABLE XXXII.](#tab-insights) Hallazgos, evidencia y recomendaciones
 
 ---
 
@@ -191,7 +235,7 @@
 
 ## Resumen
 
-**Resumen**—Este informe documenta una solución de Business Intelligence aplicada a la tienda de barrio "Mariana" (La Primavera, Ibarra), un negocio que no registra sus ventas de forma sistemática y controla su inventario por observación. A partir de facturas electrónicas de compra y de una muestra de ventas, ambas transcritas a una hoja de cálculo con autorización verbal de la propietaria, se construyó un proceso ETL en Pentaho Data Integration que carga un modelo dimensional en PostgreSQL 17. El modelo es una constelación con dos tablas de hechos (`fact_compras` y `fact_ventas`), dimensiones compartidas (`dim_tiempo`, `dim_categoria`) y un copo de nieve parcial entre productos y categorías. Se plantearon siete preguntas de negocio, respondidas con consultas SQL, y se elaboró un dashboard en Power BI conectado a la base de datos. Los resultados muestran que el 90,5 % de lo facturado corresponde a mercadería, que un solo proveedor concentra el 17,3 % de las compras de mercadería, que las compras de 2025 crecieron de forma sostenida hasta diciembre y que la estructura de compras por categoría difiere de la de ventas. El informe cierra con recomendaciones para el negocio y las limitaciones de los datos.
+**Resumen**—Este informe documenta una solución de Business Intelligence aplicada a la tienda de barrio "Mariana" (La Primavera, Ibarra), un negocio que no registra sus ventas de forma sistemática y controla su inventario por observación. A partir de facturas electrónicas de compra y de una muestra de ventas, ambas transcritas a una hoja de cálculo con autorización verbal de la propietaria, se construyó un proceso ETL en Pentaho Data Integration que carga un modelo dimensional en PostgreSQL 17. El modelo es una constelación con dos tablas de hechos (`fact_compras` y `fact_ventas`), dimensiones compartidas (`dim_tiempo`, `dim_categoria`) y un copo de nieve parcial entre productos y categorías. Se plantearon siete preguntas de negocio, respondidas con consultas SQL, y se elaboró un dashboard en Power BI conectado a la base de datos. Los resultados muestran que el 90,5 % de lo facturado corresponde a mercadería, que un solo proveedor concentra el 17,3 % de las compras de mercadería, que las compras de 2025 crecieron de forma sostenida hasta diciembre y que la estructura de compras por categoría difiere de la de ventas. Se aplicaron las operaciones OLAP roll-up, drill-down, slice, dice, pivot, cube y drill-across sobre vistas cubo en PostgreSQL, Excel y Power BI; el análisis muestra que el cuarto trimestre de 2025 concentra el 31,6 % de las compras anuales. El informe cierra con recomendaciones para el negocio y las limitaciones de los datos.
 
 **Términos de indexación**—Business Intelligence, Data Warehouse, modelado dimensional, esquema constelación, ETL, Pentaho, PostgreSQL, Power BI, OLAP.
 
@@ -252,6 +296,7 @@ Desarrollar una solución de Business Intelligence para la tienda de barrio "Mar
 - Construir un proceso ETL en Pentaho (transformaciones y Job) que extraiga, transforme y cargue los datos.
 - Validar la carga y documentar los problemas encontrados en los datos y durante la implementación.
 - Responder las preguntas de negocio mediante consultas SQL y visualizarlas en un dashboard de Power BI.
+- Aplicar operaciones OLAP (roll-up, drill-down, slice, dice, pivot, cube y drill-across) sobre los hechos de compras y ventas.
 - Formular insights y recomendaciones para la propietaria del negocio.
 
 <a id="obj-entregables"></a>
@@ -267,8 +312,8 @@ Desarrollar una solución de Business Intelligence para la tienda de barrio "Mar
 | Proceso ETL en Pentaho (transformaciones y Job) | [`pentaho/`](pentaho/) |
 | Validación de la carga | [`sql/03_validacion.sql`](sql/03_validacion.sql) |
 | Consultas SQL de las preguntas de negocio | [`sql/04_preguntas.sql`](sql/04_preguntas.sql) |
-| Dashboard en Power BI conectado a PostgreSQL | [enlace pendiente: dashboard de Power BI conectado a PostgreSQL] |
-| Análisis OLAP | [pendiente: análisis OLAP] |
+| Dashboard en Power BI conectado a PostgreSQL | [Dashboard de Power BI](https://app.powerbi.com/view?r=eyJrIjoiNjcwZjlhZGQtNjE3MC00Y2M0LTkxNTctNjE5NDAyYzcwYTU3IiwidCI6IjY4MmE0ZTZhLWE3N2YtNDk1OC1hM2FjLTllMjY2ZDE4YWEzNyIsImMiOjR9&pageName=5a374a436c63a81af349) |
+| Análisis OLAP | [`sql/05_olap.sql`](sql/05_olap.sql) y [Análisis OLAP](https://app.powerbi.com/view?r=eyJrIjoiNzFiODhlMzYtMWE4OS00YjQzLWFkYmQtM2Q5OWUxODE4MDU0IiwidCI6IjY4MmE0ZTZhLWE3N2YtNDk1OC1hM2FjLTllMjY2ZDE4YWEzNyIsImMiOjR9) |
 | Informe final | Este documento (`README.md`) |
 
 ---
@@ -312,8 +357,6 @@ Los datos son reales y la propietaria de la tienda autorizó verbalmente su uso 
 
 - **Compras:** las facturas corresponden a los años 2025 y 2026. El análisis de la evolución mensual (P5) se realiza sobre 2025.
 - **Ventas:** son una muestra de 10 días, no un registro continuo. Por eso las ventas se comparan por promedio diario (P3) y por porcentajes (P7), no por montos absolutos frente a las compras.
-- **Transcripción manual:** al pasar las facturas de PDF a Excel existe riesgo de errores de digitación; varios se corrigen en el ETL (Sección VI).
-- **Forma de pago:** el negocio acepta efectivo, DeUna y fiado, pero solo las facturas de compra registran la forma de pago; los datos de ventas no la incluyen.
 - **Autorización:** fue verbal, no escrita.
 
 ---
@@ -603,7 +646,7 @@ El flujo es: **Excel (transcripción de facturas y ventas) → Pentaho PDI → e
 | pgAdmin | — | Administración y ejecución de consultas |
 | Pentaho Data Integration (PDI) | 10.2.0.0-222 | Proceso ETL |
 | Power BI Desktop | — | Dashboard |
-| Excel | — | Transcripción de las facturas y registro de ventas |
+| Excel | — | Transcripción de las facturas, registro de ventas y tabla dinámica del análisis OLAP |
 
 <a id="fig-conexion"></a>
 <p align="center">
@@ -1178,7 +1221,7 @@ ORDER BY pct_compras DESC;
 
 ## IX. Dashboard en Power BI
 
-[enlace pendiente: dashboard de Power BI conectado a PostgreSQL]
+[Dashboard de Power BI](https://app.powerbi.com/view?r=eyJrIjoiNjcwZjlhZGQtNjE3MC00Y2M0LTkxNTctNjE5NDAyYzcwYTU3IiwidCI6IjY4MmE0ZTZhLWE3N2YtNDk1OC1hM2FjLTllMjY2ZDE4YWEzNyIsImMiOjR9&pageName=5a374a436c63a81af349)
 
 Se desarrolló un dashboard de dos páginas en Power BI Desktop, conectado a la base `tienda_mariana` en PostgreSQL en modo Importar. Sigue las buenas prácticas de visualización del curso: titulares descriptivos, una jerarquía de lectura (indicadores, desglose y detalle), colores consistentes y gráficos adecuados a cada pregunta [4], [5], [10].
 
@@ -1195,7 +1238,7 @@ Orientada al control financiero de las adquisiciones: monitorea la facturación,
 
 <a id="fig-dash1"></a>
 <p align="center">
-  <img src="capturas/capturasPowerBi/pagina1.jpeg" alt="Fig. 29. Página 1 del dashboard: Análisis de Facturas y Compras." width="85%">
+  <img src="capturas/capturasPowerBi/pagina1.png" alt="Fig. 29. Página 1 del dashboard: Análisis de Facturas y Compras." width="85%">
 </p>
 <p align="center"><b>Fig. 29.</b> Página 1 del dashboard: Análisis de Facturas y Compras.</p>
 
@@ -1212,7 +1255,7 @@ Presenta el análisis comercial de la muestra de ventas y su cruce porcentual co
 
 <a id="fig-dash2"></a>
 <p align="center">
-  <img src="capturas/capturasPowerBi/pagina2.jpeg" alt="Fig. 30. Página 2 del dashboard: Muestra de Ventas y Comparativa." width="85%">
+  <img src="capturas/capturasPowerBi/pagina2.png" alt="Fig. 30. Página 2 del dashboard: Muestra de Ventas y Comparativa." width="85%">
 </p>
 <p align="center"><b>Fig. 30.</b> Página 2 del dashboard: Muestra de Ventas y Comparativa.</p>
 
@@ -1225,7 +1268,7 @@ Presenta el análisis comercial de la muestra de ventas y su cruce porcentual co
 
 | Pregunta | Visual del dashboard | Cobertura |
 |---|---|---|
-| P1 | Página 2: Top 10 Productos por Ingresos | Parcial: no muestra la frecuencia de venta (`veces_vendido`) |
+| P1 | Página 2: Top 10 Productos por Ingresos | Completa |
 | P2 | Página 2: Participación de Ventas por Categoría | Completa |
 | P3 | Página 2: Promedio Diario de Ventas por Día | Completa |
 | P4 | Página 1: Top 10 Proveedores de Mercadería | Parcial: no muestra el porcentaje de concentración |
@@ -1241,13 +1284,367 @@ Los indicadores (KPI), la tabla por proveedor y la tarjeta Total Ventas son indi
 
 ## X. Análisis OLAP
 
-[pendiente: análisis OLAP]
+El análisis OLAP permite navegar los datos del *Data Warehouse* como un **cubo multidimensional**: cada medida se analiza según dimensiones y jerarquías, y se puede subir o bajar el nivel de detalle [10]. Se trabajó sobre los dos hechos del modelo constelación (TABLE XXIII).
+
+<a id="tab-olap-cubos"></a>
+<p align="center"><b>TABLE XXIII</b><br>CUBOS OLAP, MEDIDAS Y DIMENSIONES</p>
+
+| Cubo | Medida | Dimensiones y jerarquías |
+|---|---|---|
+| Compras (`dw.fact_compras`) | `total` (USD) | Tiempo (año → trimestre → mes → día), Proveedor (`es_mercaderia` → razón social), Categoría → Producto |
+| Ventas (`dw.fact_ventas`) | `valor` (USD) | Tiempo (día de la semana, fin de semana), Categoría → Producto |
+
+<a id="olap-vistas"></a>
+
+### A. Vistas cubo y herramientas
+
+Para facilitar el análisis se crearon dos vistas que unen cada hecho con sus dimensiones: `dw.v_cubo_compras` y `dw.v_cubo_ventas` ([`sql/05_olap.sql`](sql/05_olap.sql)). Las operaciones se aplicaron en tres herramientas (TABLE XXIV).
+
+<a id="tab-olap-herr"></a>
+<p align="center"><b>TABLE XXIV</b><br>HERRAMIENTAS UTILIZADAS EN EL ANÁLISIS OLAP</p>
+
+| Herramienta | Cómo se aplicó | Evidencia |
+|---|---|---|
+| **PostgreSQL** | Vistas cubo y consultas con `GROUP BY ROLLUP`, `CUBE` y `FILTER` | [`sql/05_olap.sql`](sql/05_olap.sql) |
+| **Excel** | Tabla dinámica sobre la vista `v_cubo_compras` (exportada a CSV desde pgAdmin), con segmentaciones de datos | [Libro](excel/cubo_olap_tienda_mariana.xlsx) |
+| **Power BI** | Conexión a PostgreSQL en modo Importar con las vistas y `dim_categoria`; jerarquía de tiempo, segmentaciones, matriz y medidas DAX | [Informe OLAP publicado](https://app.powerbi.com/view?r=eyJrIjoiNzFiODhlMzYtMWE4OS00YjQzLWFkYmQtM2Q5OWUxODE4MDU0IiwidCI6IjY4MmE0ZTZhLWE3N2YtNDk1OC1hM2FjLTllMjY2ZDE4YWEzNyIsImMiOjR9); [el archivo `.pbix`](powerbi/olap_tienda_mariana.pbix)  |
+
+Para reproducir el análisis basta con ejecutar el Job de Pentaho (Anexo B) y luego [`sql/05_olap.sql`](sql/05_olap.sql), que crea las vistas y contiene las consultas de cada operación.
+
+<a id="fig-olap-vistas"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_vistas.png" alt="Fig. 31. Creación de las vistas v_cubo_compras y v_cubo_ventas en PostgreSQL." width="85%">
+</p>
+<p align="center"><b>Fig. 31.</b> Creación de las vistas v_cubo_compras y v_cubo_ventas en PostgreSQL.</p>
+
+<a id="olap-tipo"></a>
+
+### B. Tipo de OLAP utilizado
+
+Se aplicó **ROLAP (OLAP relacional)**: el cubo no se guarda aparte, sino que se arma sobre las tablas relacionales del *Data Warehouse* en PostgreSQL. Las vistas `v_cubo_*` unen el hecho con sus dimensiones y las agregaciones (`GROUP BY`, `ROLLUP`, `CUBE`) se calculan en el momento de la consulta.
+
+En Power BI y en la tabla dinámica de Excel los datos se importan a memoria. Ese almacenamiento se comporta como **MOLAP**: los cálculos son más rápidos, pero hay que actualizar los datos (**Actualizar**) cuando cambia la base. Por eso la solución combina ambos enfoques: el detalle vive en PostgreSQL (ROLAP) y el análisis visual trabaja sobre la copia en memoria (TABLE XXV).
+
+<a id="tab-olap-rolap"></a>
+<p align="center"><b>TABLE XXV</b><br>COMPARACIÓN ENTRE ROLAP Y MOLAP EN ESTA SOLUCIÓN</p>
+
+| | ROLAP (PostgreSQL) | MOLAP (copia importada en Power BI y Excel) |
+|---|---|---|
+| Dónde están los datos | Tablas relacionales `dw.*` | Memoria del archivo de Power BI o de Excel |
+| Ventaja | Usa la base existente, siempre al día y con todo el detalle | Consultas muy rápidas y fácil de usar |
+| Desventaja | Consultas más lentas con muchos datos | Hay que refrescar los datos y ocupa espacio |
+
+<a id="fig-olap-modo"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_modo_almacenamiento.png" alt="Fig. 32. Modo de almacenamiento Importar del modelo en Power BI." width="85%">
+</p>
+<p align="center"><b>Fig. 32.</b> Modo de almacenamiento Importar del modelo en Power BI.</p>
+
+<a id="olap-modelo"></a>
+
+### C. Modelo OLAP en Power BI
+
+En Power BI se cargaron las dos vistas cubo y la dimensión compartida `dim_categoria`. Se relacionaron con cardinalidad uno a varios (1:\*) y filtro en una sola dirección, de modo que la categoría filtra los dos cubos. Es la constelación del *Data Warehouse* en pequeño (Fig. 33).
+
+<a id="fig-olap-pbimodelo"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_modelo.png" alt="Fig. 33. Modelo en Power BI: dim_categoria relacionada con las dos vistas cubo." width="85%">
+</p>
+<p align="center"><b>Fig. 33.</b> Modelo en Power BI: dim_categoria relacionada con las dos vistas cubo.</p>
+
+Se crearon las siguientes medidas DAX:
+
+```DAX
+Total compras = SUM('dw v_cubo_compras'[total])
+Facturas      = DISTINCTCOUNT('dw v_cubo_compras'[numero_factura])
+Total ventas  = SUM('dw v_cubo_ventas'[valor])
+% Compras     = DIVIDE([Total compras], CALCULATE([Total compras], ALL('dw dim_categoria'), 'dw dim_categoria'[nombre_categoria] <> "No mercadería"))
+% Ventas      = DIVIDE([Total ventas], CALCULATE([Total ventas], ALL('dw dim_categoria')))
+```
+
+Además se creó la jerarquía **Tiempo** (`anio` → `trimestre` → `nombre_mes`) y se ordenó `nombre_mes` por la columna `mes`. La página de análisis integra tarjetas, segmentaciones (año, trimestre, categoría y `es_mercaderia`), un gráfico de columnas con la jerarquía de tiempo, una matriz y un gráfico comparativo de compras y ventas por categoría.
+
+<a id="fig-olap-pbipagina"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_pagina.png" alt="Fig. 34. Página de análisis OLAP en Power BI Desktop." width="85%">
+</p>
+<p align="center"><b>Fig. 34.</b> Página de análisis OLAP en Power BI Desktop.</p>
+
+<a id="olap-rollup"></a>
+
+### D. Roll-up: de mes a trimestre y año
+
+El *roll-up* sube de nivel en una jerarquía y resume los datos. `GROUP BY ROLLUP (anio, trimestre, mes)` genera los subtotales por trimestre, por año y el total general (TABLE XXVI).
+
+<a id="tab-olap-rollup"></a>
+<p align="center"><b>TABLE XXVI</b><br>ROLL-UP: COMPRAS POR AÑO Y TRIMESTRE</p>
+
+| Año | Trimestre | Compras (USD) |
+|---|---|---:|
+| 2025 | T1 | 1.824,52 |
+| 2025 | T2 | 2.024,99 |
+| 2025 | T3 | 1.987,13 |
+| 2025 | T4 | 2.697,20 |
+| **2025** | **Total** | **8.533,84** |
+| 2026 | T3 | 962,66 |
+| 2026 | T4 | 587,90 |
+| **2026** | **Total** | **1.550,56** |
+| **Total general** | | **10.084,40** |
+
+*Nota.* Elaboración propia con `dw.v_cubo_compras`.
+
+<a id="fig-olap-rollup_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_rollup.png" alt="Fig. 35. Roll-up en PostgreSQL con GROUP BY ROLLUP: subtotales por trimestre, por año y total general." width="85%">
+</p>
+<p align="center"><b>Fig. 35.</b> Roll-up en PostgreSQL con GROUP BY ROLLUP: subtotales por trimestre, por año y total general.</p>
+
+<a id="fig-olap-rollup_xl"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_rollup.png" alt="Fig. 36. Roll-up en Excel: tabla dinámica contraída a nivel de año." width="85%">
+</p>
+<p align="center"><b>Fig. 36.</b> Roll-up en Excel: tabla dinámica contraída a nivel de año.</p>
+
+<a id="fig-olap-rollup_bi"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_rollup.png" alt="Fig. 37. Roll-up en Power BI: gráfico de columnas a nivel de año." width="85%">
+</p>
+<p align="center"><b>Fig. 37.</b> Roll-up en Power BI: gráfico de columnas a nivel de año.</p>
+
+**Interpretación.** El cuarto trimestre de 2025 concentra la mayor compra del año (31,6 % del total anual), posiblemente asociada a la temporada navideña.
+
+<a id="olap-drilldown"></a>
+
+### E. Drill-down: de año a trimestre y mes
+
+El *drill-down* es la operación contraria: baja a un nivel más detallado. Se partió del total de 2025, se bajó al cuarto trimestre y luego a sus meses: **octubre $732,31 → noviembre $894,43 → diciembre $1.070,46**. Diciembre es el mes con más compras de todo el periodo.
+
+<a id="fig-olap-dd_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_drilldown.png" alt="Fig. 38. Drill-down en PostgreSQL: meses del cuarto trimestre de 2025." width="85%">
+</p>
+<p align="center"><b>Fig. 38.</b> Drill-down en PostgreSQL: meses del cuarto trimestre de 2025.</p>
+
+<a id="fig-olap-dd_xl"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_drilldown.png" alt="Fig. 39. Drill-down en Excel: expansión de 2025 a trimestre y mes." width="85%">
+</p>
+<p align="center"><b>Fig. 39.</b> Drill-down en Excel: expansión de 2025 a trimestre y mes.</p>
+
+<a id="fig-olap-dd_bi"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_drilldown.png" alt="Fig. 40. Drill-down en Power BI: meses del cuarto trimestre de 2025." width="85%">
+</p>
+<p align="center"><b>Fig. 40.</b> Drill-down en Power BI: meses del cuarto trimestre de 2025.</p>
+
+En Power BI el *drill-down* y el *roll-up* se hacen con los botones del gráfico de columnas (explorar en profundidad ↓ y rastrear agrupando datos ↑) sobre la jerarquía Tiempo. En la captura, la tarjeta de compras suma el cuarto trimestre de ambos años ($3,29 mil) porque no hay un año seleccionado en la segmentación, mientras que el gráfico, ya explorado en profundidad, muestra los meses del cuarto trimestre de 2025.
+
+<a id="olap-slice"></a>
+
+### F. Slice: año = 2025
+
+El *slice* fija un único valor en una dimensión y devuelve la porción del cubo que le corresponde. Al fijar la dimensión tiempo en el año 2025 se obtienen las compras por categoría (TABLE XXVII).
+
+<a id="tab-olap-slice"></a>
+<p align="center"><b>TABLE XXVII</b><br>SLICE: COMPRAS POR CATEGORÍA EN 2025 (CINCO PRIMERAS)</p>
+
+| Categoría | Compras 2025 (USD) | % |
+|---|---:|---:|
+| Bebidas | 1.891,57 | 22,2 |
+| Abarrotes | 1.225,61 | 14,4 |
+| Snacks y dulces | 1.175,70 | 13,8 |
+| No mercadería | 961,99 | 11,3 |
+| Cuidado personal | 875,24 | 10,3 |
+
+*Nota.* Se muestran las 5 primeras de 14 categorías.
+
+<a id="fig-olap-sl_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_slice.png" alt="Fig. 41. Slice en PostgreSQL: compras por categoría con anio = 2025." width="85%">
+</p>
+<p align="center"><b>Fig. 41.</b> Slice en PostgreSQL: compras por categoría con anio = 2025.</p>
+
+<a id="fig-olap-sl_xl"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_slice.png" alt="Fig. 42. Slice en Excel: segmentación de año en 2025." width="85%">
+</p>
+<p align="center"><b>Fig. 42.</b> Slice en Excel: segmentación de año en 2025.</p>
+
+<a id="fig-olap-sl_bi"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_slice.png" alt="Fig. 43. Slice en Power BI: segmentación de año en 2025." width="85%">
+</p>
+<p align="center"><b>Fig. 43.</b> Slice en Power BI: segmentación de año en 2025.</p>
+
+**Interpretación.** Bebidas, Abarrotes y Snacks y dulces concentran el 50,3 % de las compras de 2025. La categoría "No mercadería" (11,3 %) agrupa los gastos que no se revenden.
+
+<a id="olap-dice"></a>
+
+### G. Dice: T4 2025 × Bebidas y Snacks × solo mercadería
+
+El *dice* es un *slice* sobre varias dimensiones a la vez: genera un subcubo con filtros en tres dimensiones (tiempo, categoría y proveedor) (TABLE XXVIII).
+
+<a id="tab-olap-dice"></a>
+<p align="center"><b>TABLE XXVIII</b><br>DICE: COMPRAS DE BEBIDAS Y SNACKS Y DULCES EN EL CUARTO TRIMESTRE DE 2025</p>
+
+| Mes | Bebidas (USD) | Snacks y dulces (USD) |
+|---|---:|---:|
+| Octubre | 173,27 | 88,24 |
+| Noviembre | 213,00 | 142,34 |
+| Diciembre | 256,56 | 142,07 |
+
+<a id="fig-olap-dc_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_dice.png" alt="Fig. 44. Dice en PostgreSQL: cuarto trimestre de 2025, Bebidas y Snacks y dulces, solo mercadería." width="85%">
+</p>
+<p align="center"><b>Fig. 44.</b> Dice en PostgreSQL: cuarto trimestre de 2025, Bebidas y Snacks y dulces, solo mercadería.</p>
+
+<a id="fig-olap-dc_xl"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_dice.png" alt="Fig. 45. Dice en Excel: tabla dinámica con segmentaciones de año, trimestre, categoría y es_mercaderia." width="85%">
+</p>
+<p align="center"><b>Fig. 45.</b> Dice en Excel: tabla dinámica con segmentaciones de año, trimestre, categoría y es_mercaderia.</p>
+
+<a id="fig-olap-dc_bi"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_dice.png" alt="Fig. 46. Dice en Power BI: segmentaciones de año, trimestre, categoría y es_mercaderia." width="85%">
+</p>
+<p align="center"><b>Fig. 46.</b> Dice en Power BI: segmentaciones de año, trimestre, categoría y es_mercaderia.</p>
+
+En Power BI el *slice* y el *dice* se hacen con las segmentaciones de año, trimestre, categoría y `es_mercaderia`. Con el *dice* aplicado, el gráfico muestra $1.015,48 (642,83 de Bebidas + 372,65 de Snacks y dulces) y la tarjeta Total compras lo resume como $1,02 mil.
+
+**Interpretación.** Las compras de Bebidas crecen todos los meses del último trimestre (+48 % de octubre a diciembre).
+
+<a id="olap-pivot"></a>
+
+### H. Pivot: categorías × trimestres
+
+El *pivot* rota los ejes para ver los mismos datos desde otra perspectiva. Se tomaron las categorías en filas y los trimestres de 2025 en columnas (y viceversa), con `SUM(...) FILTER (WHERE trimestre = n)` en SQL y moviendo campos entre Filas y Columnas en la tabla dinámica de Excel y en la matriz de Power BI (TABLE XXIX).
+
+<a id="tab-olap-pivot"></a>
+<p align="center"><b>TABLE XXIX</b><br>PIVOT: COMPRAS POR CATEGORÍA Y TRIMESTRE EN 2025 (OCHO PRIMERAS CATEGORÍAS)</p>
+
+| Categoría | T1 | T2 | T3 | T4 | Total 2025 |
+|---|---:|---:|---:|---:|---:|
+| Bebidas | 332,76 | 462,69 | 453,29 | 642,83 | 1.891,57 |
+| Abarrotes | 344,40 | 237,93 | 221,64 | 421,64 | 1.225,61 |
+| Snacks y dulces | 135,88 | 322,42 | 344,75 | 372,65 | 1.175,70 |
+| No mercadería | 276,39 | 252,06 | 168,46 | 265,08 | 961,99 |
+| Cuidado personal | 125,06 | 345,61 | 199,65 | 204,92 | 875,24 |
+| Lácteos y huevos | 124,23 | 100,58 | 91,67 | 393,95 | 710,43 |
+| Carnes y embutidos | 151,31 | 75,10 | 180,75 | 180,36 | 587,52 |
+| Limpieza | 172,90 | 99,24 | 102,93 | 119,70 | 494,77 |
+
+*Nota.* Valores en USD; se muestran las 8 primeras categorías.
+
+<a id="fig-olap-pv_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pivot.png" alt="Fig. 47. Pivot en PostgreSQL con SUM(...) FILTER: categorías en filas y trimestres en columnas." width="85%">
+</p>
+<p align="center"><b>Fig. 47.</b> Pivot en PostgreSQL con SUM(...) FILTER: categorías en filas y trimestres en columnas.</p>
+
+<a id="fig-olap-pv_xl1"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_pivot1.png" alt="Fig. 48. Pivot en Excel: categorías en filas y trimestres en columnas." width="85%">
+</p>
+<p align="center"><b>Fig. 48.</b> Pivot en Excel: categorías en filas y trimestres en columnas.</p>
+
+<a id="fig-olap-pv_xl2"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_excel_pivot2.png" alt="Fig. 49. Pivot en Excel: tabla girada, con trimestres en filas y categorías en columnas." width="85%">
+</p>
+<p align="center"><b>Fig. 49.</b> Pivot en Excel: tabla girada, con trimestres en filas y categorías en columnas.</p>
+
+<a id="fig-olap-pv_bi1"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_pivot1.png" alt="Fig. 50. Pivot en Power BI: matriz con categorías en filas y trimestres en columnas." width="85%">
+</p>
+<p align="center"><b>Fig. 50.</b> Pivot en Power BI: matriz con categorías en filas y trimestres en columnas.</p>
+
+<a id="fig-olap-pv_bi2"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_pivot2.png" alt="Fig. 51. Pivot en Power BI: matriz girada, con trimestres en filas y categorías en columnas." width="85%">
+</p>
+<p align="center"><b>Fig. 51.</b> Pivot en Power BI: matriz girada, con trimestres en filas y categorías en columnas.</p>
+
+**Interpretación.** El aumento del cuarto trimestre no es uniforme: Lácteos y huevos concentra el 55,5 % de su compra anual en el T4 y Bebidas el 34,0 %, mientras que Cuidado personal tiene su pico en el T2 ($345,61).
+
+<a id="olap-cube"></a>
+
+### I. Cube: todas las combinaciones de subtotales
+
+`GROUP BY CUBE (anio, es_mercaderia)` calcula en una sola consulta los subtotales por año, por tipo de proveedor y el total general; las filas "Todos" son los subtotales (TABLE XXX). Por ejemplo, en 2025 el gasto en proveedores que no son mercadería fue de $961,99 (11,3 % del año).
+
+<a id="tab-olap-cube"></a>
+<p align="center"><b>TABLE XXX</b><br>CUBE: COMPRAS POR AÑO Y TIPO DE PROVEEDOR</p>
+
+| Año | ¿Mercadería? | Compras (USD) |
+|---|:---:|---:|
+| 2025 | NO | 961,99 |
+| 2025 | SI | 7.571,85 |
+| 2025 | Todos | 8.533,84 |
+| 2026 | SI | 1.550,56 |
+| 2026 | Todos | 1.550,56 |
+| Todos | NO | 961,99 |
+| Todos | SI | 9.122,41 |
+| Todos | Todos | 10.084,40 |
+
+<a id="fig-olap-cube"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_cube.png" alt="Fig. 52. Cube en PostgreSQL con GROUP BY CUBE (anio, es_mercaderia)." width="85%">
+</p>
+<p align="center"><b>Fig. 52.</b> Cube en PostgreSQL con GROUP BY CUBE (anio, es_mercaderia).</p>
+
+<a id="olap-across"></a>
+
+### J. Drill-across: compras vs ventas por categoría
+
+Como el modelo es una **constelación**, los dos hechos comparten la dimensión conformada `dim_categoria`. El *drill-across* agrupa cada hecho por separado y los compara por la categoría; los hechos no se unen directamente (TABLE XXXI).
+
+<a id="tab-olap-across"></a>
+<p align="center"><b>TABLE XXXI</b><br>DRILL-ACROSS: PARTICIPACIÓN EN COMPRAS Y EN VENTAS POR CATEGORÍA</p>
+
+| Categoría | % de compras | % de ventas |
+|---|---:|---:|
+| Bebidas | 23,1 | 7,7 |
+| Abarrotes | 15,4 | 14,8 |
+| Snacks y dulces | 15,3 | 11,4 |
+| Cuidado personal | 12,6 | 5,2 |
+| Lácteos y huevos | 10,8 | 14,6 |
+| Carnes y embutidos | 7,4 | 11,1 |
+| Frutas y verduras | 0,0 | 10,4 |
+
+*Nota.* Las ventas son una muestra de 10 días y las compras abarcan un periodo más largo, por eso se comparan porcentajes y no montos.
+
+<a id="fig-olap-da_pg"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_drillacross.png" alt="Fig. 53. Drill-across en PostgreSQL: compras y ventas por categoría." width="85%">
+</p>
+<p align="center"><b>Fig. 53.</b> Drill-across en PostgreSQL: compras y ventas por categoría.</p>
+
+<a id="fig-olap-da_bi"></a>
+<p align="center">
+  <img src="capturas/capturasOLAP/olap_pbi_drillacross.png" alt="Fig. 54. Drill-across en Power BI: porcentaje de compras y de ventas por categoría." width="85%">
+</p>
+<p align="center"><b>Fig. 54.</b> Drill-across en Power BI: porcentaje de compras y de ventas por categoría.</p>
+
+**Interpretación.**
+
+- Bebidas y Cuidado personal pesan mucho más en lo que se compra que en lo que se vende, lo que sugiere revisar el stock.
+- Lácteos y huevos y Carnes y embutidos venden proporcionalmente más de lo que pesan en las compras facturadas.
+- Frutas y verduras se venden bastante (10,4 %) pero no aparecen en las facturas de compra (en la tabla de categorías figura como "Solo ventas").
+
+<a id="olap-publicado"></a>
+
+### K. Informe OLAP publicado
+
+La página de análisis OLAP está publicada en Power BI únicamente para su visualización: [ver informe](https://app.powerbi.com/view?r=eyJrIjoiNzFiODhlMzYtMWE4OS00YjQzLWFkYmQtM2Q5OWUxODE4MDU0IiwidCI6IjY4MmE0ZTZhLWE3N2YtNDk1OC1hM2FjLTllMjY2ZDE4YWEzNyIsImMiOjR9).
 
 ---
 
 <a id="insights"></a>
 
-## XI. Insights y recomendaciones
+## XXIII. Insights y recomendaciones
 
 <a id="tab-insights"></a>
 <p align="center"><b>TABLE XXIII</b><br>HALLAZGOS, EVIDENCIA Y RECOMENDACIONES</p>
@@ -1262,6 +1659,8 @@ Los indicadores (KPI), la tabla por proveedor y la tarjeta Total Ventas son indi
 | 6 | Las ventas varían según el día | Lunes: $166,08 de promedio; miércoles: $119,65 (P3) | Reforzar el abastecimiento antes de los días fuertes y probar promociones en los días de menor venta |
 | 7 | El 9,5 % de lo facturado no es mercadería | Servicios básicos: 5,4 %; gasto personal: 2,7 % (P6) | Separar los gastos del negocio de los personales en la facturación para medir mejor la rentabilidad |
 | 8 | Las ventas no se registran de forma continua | Solo se dispone de una muestra de 10 días; no se registra la forma de pago | Registrar las ventas diariamente (producto, cantidad, medida y forma de pago: efectivo, DeUna o fiado) para analizar estacionalidad y fiado |
+| 9 | El aumento de fin de año se explica sobre todo por Lácteos y huevos, Abarrotes y Bebidas | Lácteos y huevos concentra el 55,5 % de su compra anual en el T4; Bebidas, el 34,0 %, con un crecimiento de +48 % de octubre a diciembre (OLAP: pivot y dice, TABLE XXIX y TABLE XXVIII) | Planificar el stock de estas categorías para el último trimestre y verificar con ventas continuas si rotan |
+| 10 | Frutas y verduras se venden bastante, pero no tienen compras facturadas | 10,4 % de las ventas de la muestra frente a 0,0 % de las compras (OLAP: drill-across, TABLE XXXI) | Registrar las compras de esta categoría (por ejemplo, las del mercado mayorista) para calcular su margen |
 
 *Nota.* Las comparaciones entre compras y ventas son orientativas, porque las ventas provienen de una muestra de 10 días.
 
@@ -1276,7 +1675,8 @@ Los indicadores (KPI), la tabla por proveedor y la tarjeta Total Ventas son indi
 - La calidad de datos fue el principal reto, por la transcripción manual desde PDF: precios, escalas de IVA, bonificaciones, unidades de medida y cantidades requirieron reglas de limpieza en el ETL.
 - Los resultados muestran una compra de mercadería concentrada en un proveedor, un fuerte crecimiento del gasto hacia diciembre de 2025 y diferencias entre lo que se compra y lo que se vende por categoría.
 - Los resultados de ventas son orientativos por provenir de una muestra de 10 días. Registrar las ventas de forma continua, incluyendo la forma de pago, es la mejora de mayor valor para el negocio.
-- Como trabajo futuro se plantea la carga incremental, una dimensión basura para forma de pago y bonificación, una dimensión de producto conformada entre compras y ventas, y el análisis OLAP.
+- El análisis OLAP (roll-up, drill-down, slice, dice, pivot, cube y drill-across), aplicado en PostgreSQL, Excel y Power BI, permitió navegar el cubo de compras y ventas y confirmó que el cuarto trimestre de 2025 concentra el 31,6 % de las compras anuales y que la estructura de compras por categoría difiere de la de ventas.
+- Como trabajo futuro se plantea la carga incremental, una dimensión basura para forma de pago y bonificación y una dimensión de producto conformada entre compras y ventas.
 
 ---
 
@@ -1349,7 +1749,7 @@ bi_tienda_mariana/
     └── capturasPowerBi/
 ```
 
-*Nota.* La carpeta `datos/` con el Excel de origen no se versiona por protección de datos.
+
 
 <a id="anexo-b"></a>
 
@@ -1361,6 +1761,7 @@ bi_tienda_mariana/
 4. Colocar en la carpeta `datos/` un Excel con la misma estructura de siete hojas descrita en la [Sección III](#fuente) (el original no se publica) y verificar que la ruta relativa configurada en los pasos *Excel input* de `01_staging.ktr` apunte a ese archivo.
 5. Abrir y ejecutar [`pentaho/Job_Tienda_Mariana.kjb`](pentaho/Job_Tienda_Mariana.kjb). El Job reinicia el DW, carga el staging, las dimensiones y los hechos.
 6. Ejecutar [`sql/03_validacion.sql`](sql/03_validacion.sql) para validar la carga y [`sql/04_preguntas.sql`](sql/04_preguntas.sql) para obtener las respuestas a las preguntas de negocio.
+7. Ejecutar [`sql/05_olap.sql`](sql/05_olap.sql) para crear las vistas `dw.v_cubo_compras` y `dw.v_cubo_ventas` y obtener las consultas del análisis OLAP (Sección X).
 
 <a id="anexo-c"></a>
 
